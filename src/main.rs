@@ -7,6 +7,7 @@ use std::sync::Mutex;
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use std::thread;
 use std::collections::VecDeque;
+use rfd::FileDialog;
 
 #[derive(Debug, Deserialize)]
 struct Music {
@@ -130,7 +131,7 @@ fn fetch_playlist_videos(url: &str) -> Result<Vec<Music>, Box<dyn std::error::Er
     Ok(videos)
 }
 
-fn download_video(url: &str) {
+fn download_video(url: &str, download_dir: &str) {
     let status = YoutubeDl::new(url)
         .extract_audio(true)
         .extra_arg("--audio-format")
@@ -139,7 +140,7 @@ fn download_video(url: &str) {
         // .extra_arg("--list-thumbnails")
         .extra_arg("--embed-thumbnail")
         .output_template("%(title)s.%(ext)s")
-        .download_to("./Music");
+        .download_to(download_dir);
 
     match status {
         Ok(_) => {
@@ -169,39 +170,51 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
     let buffer_clone = Arc::clone(&url_buffer);
+    let download_dir = Arc::new(Mutex::new(String::from("~/Music"))); // Default download directory
 
     // Start command listener in a separate thread
-    thread::spawn(move || {
-        let stdin = io::stdin();
-        let mut stdout = io::stdout();
-        
-        while running.load(Ordering::SeqCst) {
-            print!("Enter command (add <url>, download, or quit): ");
-            stdout.flush().unwrap();
+    thread::spawn({
+        let download_dir = Arc::clone(&download_dir);
+        move || {
+            let stdin = io::stdin();
+            let mut stdout = io::stdout();
             
-            let mut input = String::new();
-            stdin.lock().read_line(&mut input).unwrap();
-            let input = input.trim();
-            
-            if input.starts_with("add ") {
-                let url = input.trim_start_matches("add ").trim().to_string();
-                buffer_clone.lock().unwrap().push_back(url.clone());
-                println!("Added to buffer: {}", url);
-            } else if input == "download" {
-                let urls: Vec<String> = buffer_clone.lock().unwrap().drain(..).collect();
-                if urls.is_empty() {
-                    println!("No URLs in buffer to download.");
+            while running.load(Ordering::SeqCst) {
+                print!("Enter command (add <url>, download, setdir, or quit): ");
+                stdout.flush().unwrap();
+                
+                let mut input = String::new();
+                stdin.lock().read_line(&mut input).unwrap();
+                let input = input.trim();
+                
+                if input.starts_with("add ") {
+                    let url = input.trim_start_matches("add ").trim().to_string();
+                    buffer_clone.lock().unwrap().push_back(url.clone());
+                    println!("Added to buffer: {}", url);
+                } else if input == "setdir" {
+                    if let Some(new_dir) = FileDialog::new().pick_folder() {
+                        *download_dir.lock().unwrap() = new_dir.display().to_string();
+                        println!("Download directory set to: {}", *download_dir.lock().unwrap());
+                    } else {
+                        println!("No directory selected.");
+                    }
+                } else if input == "download" {
+                    let urls: Vec<String> = buffer_clone.lock().unwrap().drain(..).collect();
+                    if urls.is_empty() {
+                        println!("No URLs in buffer to download.");
+                    } else {
+                        println!("Starting download for buffered URLs...");
+                        let dir = download_dir.lock().unwrap().clone();
+                        urls.par_iter().for_each(|url| download_video(url, &dir));
+                        println!("Download completed!");
+                    }
+                } else if input == "quit" {
+                    println!("Stopping application...");
+                    running.store(false, Ordering::SeqCst);
+                    break;
                 } else {
-                    println!("Starting download for buffered URLs...");
-                    urls.par_iter().for_each(|url| download_video(url));
-                    println!("Download completed!");
+                    println!("Unknown command. Available commands: add <url>, download, setdir, quit");
                 }
-            } else if input == "quit" {
-                println!("Stopping application...");
-                running.store(false, Ordering::SeqCst);
-                break;
-            } else {
-                println!("Unknown command. Available commands: add <url>, download, quit");
             }
         }
     });
