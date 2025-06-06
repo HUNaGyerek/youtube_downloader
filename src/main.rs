@@ -85,9 +85,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize translations
     Translations::init(&config.lock().unwrap());
 
-    println!("Current language: {}", config.lock().unwrap().language);
     println!(
-        "Download directory: {}",
+        "{} {}",
+        Translations::t("current_language"),
+        config.lock().unwrap().language
+    );
+    println!(
+        "{} {}",
+        Translations::t("download_directory"),
         config.lock().unwrap().get_download_dir()
     );
 

@@ -185,9 +185,9 @@ fn load_language_file(filename: &str) -> Result<TranslationMap, Box<dyn std::err
     if path.exists() {
         let content = fs::read_to_string(path)?;
         let mut parsed: HashMap<String, String> = toml::from_str(&content)?;
-        parsed
-            .iter_mut()
-            .for_each(|(_, value)| *value = format!("{}{}", AnsiColor::Reset.code(), value));
+        // parsed
+        //     .iter_mut()
+        //     .for_each(|(_, value)| *value = format!("{}{}", AnsiColor::Reset.code(), value));
         Ok(parsed)
     } else {
         Err(format!(

@@ -157,6 +157,7 @@ pub fn install_ffmpeg() -> Result<(), Box<dyn std::error::Error>> {
         if !status.success() {
             return Err("Failed to install ffmpeg".into());
         }
+        Ok(())
     }
 
     #[cfg(target_os = "linux")]
@@ -239,49 +240,7 @@ pub fn install_yt_dlp() -> Result<(), Box<dyn std::error::Error>> {
         let status = Command::new("winget")
             .args(&["install", "yt-dlp"])
             .status()?;
-
-        if !status.success() {
-            // Try alternative installation method for Windows
-            println!("Installing yt-dlp directly...");
-            let download_url =
-                "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe";
-
-            // Create directory if it doesn't exist
-            if let Some(home) = dirs::home_dir() {
-                let dir = home.join("AppData").join("Local").join("yt-dlp");
-                fs::create_dir_all(&dir)?;
-
-                let target_path = dir.join("yt-dlp.exe");
-
-                // Download the file using reqwest if available
-                #[cfg(feature = "reqwest")]
-                {
-                    let mut response = reqwest::blocking::get(download_url)?;
-                    let mut file = fs::File::create(&target_path)?;
-                    io::copy(&mut response, &mut file)?;
-                }
-
-                // Otherwise use PowerShell
-                #[cfg(not(feature = "reqwest"))]
-                {
-                    Command::new("powershell")
-                        .args(&[
-                            "-Command",
-                            &format!(
-                                "Invoke-WebRequest -Uri '{}' -OutFile '{}'",
-                                download_url,
-                                target_path.to_string_lossy()
-                            ),
-                        ])
-                        .status()?;
-                }
-
-                println!("Installed yt-dlp to: {}", target_path.to_string_lossy());
-                return Ok(());
-            }
-
-            return Err("Failed to install yt-dlp".into());
-        }
+        return Ok(());
     }
 
     #[cfg(target_os = "linux")]
