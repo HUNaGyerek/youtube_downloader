@@ -1,8 +1,19 @@
 use chrono;
-use std::fs;
+use std::io::Write;
 use std::path::Path;
+use std::{fs, io};
 
 use crate::models::{History, Music};
+
+pub fn read_line(question: String) -> String {
+    print!("{}", question);
+    io::stdout().flush().unwrap();
+
+    let mut choice = String::new();
+    io::stdin().read_line(&mut choice).unwrap();
+
+    choice.trim().to_string()
+}
 
 pub fn load_history() -> History {
     let history_path = "download_history.json";

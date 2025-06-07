@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use std::collections::{btree_map::Range, HashMap};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::process;
@@ -207,11 +207,7 @@ fn load_language_file(filename: &str) -> Result<TranslationMap, Box<dyn std::err
     let path = Path::new(LANGUAGES_DIR).join(filename);
     if path.exists() {
         let content = fs::read_to_string(path)?;
-        let mut parsed: HashMap<String, String> = toml::from_str(&content)?;
-        // let config = Config::load();
-        // parsed
-        //     .iter_mut()
-        //     .for_each(|(_, value)| *value = format!("{}{}", AnsiColor::Reset.code(), value));
+        let parsed: HashMap<String, String> = toml::from_str(&content)?;
 
         Ok(parsed)
     } else {

@@ -17,25 +17,13 @@ mod views;
 
 use app_config::{Config, Language};
 use downloader::{download_video, fetch_playlist_videos};
-use installer::{check_ffmpeg, check_yt_dlp, get_yt_dlp_path, install_ffmpeg, install_yt_dlp};
+use installer::{check_ffmpeg, check_yt_dlp, install_ffmpeg, install_yt_dlp};
 use models::Music;
 use translation::Translations;
 use utils::{add_to_history, load_history};
 
-use crate::views::settings::{Settings, SettingsOptionValue};
-
-fn print_menu() {
-    println!("\n{}", Translations::t("menu_title"));
-    println!("{}", Translations::t("menu_add_url"));
-    println!("{}", Translations::t("menu_list_queue"));
-    println!("{}", Translations::t("menu_start_downloads"));
-    println!("{}", Translations::t("menu_view_history"));
-    println!("{}", Translations::t("menu_clear_queue"));
-    println!("{}", Translations::t("menu_settings"));
-    println!("{}", Translations::t("menu_exit"));
-    print!("\n{}", Translations::t("menu_enter_choice"));
-    io::stdout().flush().unwrap();
-}
+use crate::views::main::MainView;
+use crate::views::settings::{SettingsMenuOption, SettingsView};
 
 // Function to display language selection menu
 fn display_language_menu() {
@@ -103,37 +91,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Main program loop
     while running.load(Ordering::SeqCst) {
-        print_menu();
+        // MAIN MENU
+        let main_view = MainView::new();
+        let choice = main_view.render_view();
 
-        let mut choice = String::new();
-        io::stdin().read_line(&mut choice).unwrap();
-        let choice = choice.trim();
-
-        match choice {
+        match choice.as_str() {
             "1" => {
-                // First check if yt-dlp is installed
-                if get_yt_dlp_path().is_none() {
-                    println!("yt-dlp is not installed or not found. Attempting to install...");
-                    match install_yt_dlp() {
-                        Ok(_) => println!("yt-dlp installed successfully."),
-                        Err(e) => {
-                            println!(
-                                "Failed to install yt-dlp: {}. Cannot proceed with download.",
-                                e
-                            );
-                            continue; // Skip to next iteration of the loop
-                        }
-                    }
-
-                    // Verify installation was successful
-                    if get_yt_dlp_path().is_none() {
-                        println!(
-                            "yt-dlp was not found after installation. Please install it manually."
-                        );
-                        continue; // Skip to next iteration
-                    }
-                }
-
                 print!("{}", Translations::t("enter_url"));
                 io::stdout().flush().unwrap();
 
@@ -266,25 +229,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("{}", Translations::tf("queue_cleared", &count.to_string()));
             }
             "6" => {
-                println!("\n{}", Translations::t("settings_title"));
+                let settings_view = SettingsView::new();
+                let setting_choice = settings_view.render_view();
 
-                let settings = Settings::new();
-                for option in settings.options {
-                    println!("{}", Translations::t(&option.language));
-                }
-
-                print!("\n{}", Translations::t("settings_enter_choice"));
-                io::stdout().flush().unwrap();
-
-                let mut setting_choice = String::new();
-                io::stdin().read_line(&mut setting_choice).unwrap();
-                let setting_choice = setting_choice.trim();
-
-                match setting_choice {
-                    "1" => Settings::create_menu(SettingsOptionValue::Language),
-                    "2" => Settings::create_menu(SettingsOptionValue::Directory),
-                    "3" => Settings::create_menu(SettingsOptionValue::Coloring),
-                    "4" => Settings::create_menu(SettingsOptionValue::Back),
+                match setting_choice.as_str() {
+                    "1" => SettingsView::create_menu(SettingsMenuOption::Language),
+                    "2" => SettingsView::create_menu(SettingsMenuOption::Directory),
+                    "3" => SettingsView::create_menu(SettingsMenuOption::Coloring),
+                    "4" => SettingsView::create_menu(SettingsMenuOption::Back),
                     _ => println!("{}", Translations::tf2("invalid_choice", "1", "4")),
                 }
             }
