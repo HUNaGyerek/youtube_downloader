@@ -56,6 +56,7 @@ impl FromStr for Language {
 pub struct Config {
     pub language: Language,
     pub download_dir: String,
+    pub coloring: bool,
 }
 
 impl Default for Config {
@@ -67,6 +68,7 @@ impl Default for Config {
         Self {
             language: Language::default(),
             download_dir: music_dir.to_string_lossy().to_string(),
+            coloring: false,
         }
     }
 }
@@ -106,6 +108,12 @@ impl Config {
 
     pub fn set_download_dir(&mut self, dir: String) -> Result<(), Box<dyn std::error::Error>> {
         self.download_dir = dir;
+        self.save()?;
+        Ok(())
+    }
+
+    pub fn set_coloring(&mut self, coloring: bool) -> Result<(), Box<dyn std::error::Error>> {
+        self.coloring = coloring;
         self.save()?;
         Ok(())
     }

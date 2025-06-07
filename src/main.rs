@@ -1,5 +1,4 @@
 use rayon::prelude::*;
-use rfd::FileDialog;
 use std::collections::VecDeque;
 use std::io::{self, Write};
 use std::sync::Mutex;
@@ -8,19 +7,22 @@ use std::sync::{
     Arc,
 };
 
-mod config;
-mod downloaders;
-mod installers;
+mod app_config;
+mod downloader;
+mod installer;
 mod models;
-mod translations;
+mod translation;
 mod utils;
+mod views;
 
-use config::{Config, Language};
-use downloaders::{download_video, fetch_playlist_videos};
-use installers::{check_ffmpeg, check_yt_dlp, get_yt_dlp_path, install_ffmpeg, install_yt_dlp};
+use app_config::{Config, Language};
+use downloader::{download_video, fetch_playlist_videos};
+use installer::{check_ffmpeg, check_yt_dlp, get_yt_dlp_path, install_ffmpeg, install_yt_dlp};
 use models::Music;
-use translations::Translations;
+use translation::Translations;
 use utils::{add_to_history, load_history};
+
+use crate::views::settings::{Settings, SettingsOptionValue};
 
 fn print_menu() {
     println!("\n{}", Translations::t("menu_title"));
@@ -265,9 +267,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "6" => {
                 println!("\n{}", Translations::t("settings_title"));
-                println!("{}", Translations::t("settings_language"));
-                println!("{}", Translations::t("settings_set_directory"));
-                println!("{}", Translations::t("settings_back"));
+
+                let settings = Settings::new();
+                for option in settings.options {
+                    println!("{}", Translations::t(&option.language));
+                }
+
                 print!("\n{}", Translations::t("settings_enter_choice"));
                 io::stdout().flush().unwrap();
 
@@ -276,70 +281,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let setting_choice = setting_choice.trim();
 
                 match setting_choice {
-                    "1" => {
-                        // Display language selection menu
-                        display_language_menu();
-
-                        let mut lang_choice = String::new();
-                        io::stdin().read_line(&mut lang_choice).unwrap();
-
-                        // Parse choice as a number
-                        if let Ok(choice_num) = lang_choice.trim().parse::<usize>() {
-                            let languages = Language::all();
-
-                            if choice_num >= 1 && choice_num <= languages.len() {
-                                // Valid language choice
-                                let selected_lang = languages[choice_num - 1];
-                                let mut config = config.lock().unwrap();
-                                config.set_language(selected_lang)?;
-                                Translations::change_language(selected_lang);
-
-                                match selected_lang {
-                                    Language::English => {
-                                        println!("{}", Translations::t("language_set_english"))
-                                    }
-                                    Language::Hungarian => {
-                                        println!("{}", Translations::t("language_set_hungarian"))
-                                    }
-                                }
-                            } else if choice_num == languages.len() + 1 {
-                                // Back option
-                                println!("{}", Translations::t("return_to_menu"));
-                            } else {
-                                // Invalid number
-                                println!(
-                                    "{}",
-                                    Translations::tf2(
-                                        "invalid_choice",
-                                        "1",
-                                        &(languages.len() + 1).to_string()
-                                    )
-                                );
-                            }
-                        } else {
-                            // Not a number
-                            println!(
-                                "{}",
-                                Translations::tf2(
-                                    "invalid_choice",
-                                    "1",
-                                    &(Language::all().len() + 1).to_string()
-                                )
-                            );
-                        }
-                    }
-                    "2" => {
-                        if let Some(new_dir) = FileDialog::new().pick_folder() {
-                            let dir_str = new_dir.display().to_string();
-                            let mut config = config.lock().unwrap();
-                            config.set_download_dir(dir_str.clone())?;
-                            println!("{}", Translations::tf("dir_set", &dir_str));
-                        } else {
-                            println!("{}", Translations::t("no_dir_selected"));
-                        }
-                    }
-                    "3" => println!("{}", Translations::t("return_to_menu")),
-                    _ => println!("{}", Translations::tf2("invalid_choice", "1", "2")),
+                    "1" => Settings::create_menu(SettingsOptionValue::Language),
+                    "2" => Settings::create_menu(SettingsOptionValue::Directory),
+                    "3" => Settings::create_menu(SettingsOptionValue::Coloring),
+                    "4" => Settings::create_menu(SettingsOptionValue::Back),
+                    _ => println!("{}", Translations::tf2("invalid_choice", "1", "4")),
                 }
             }
             "7" => {

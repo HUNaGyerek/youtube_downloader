@@ -1,11 +1,11 @@
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use std::collections::{btree_map::Range, HashMap};
 use std::fs;
 use std::path::Path;
 use std::process;
 use std::sync::Mutex;
 
-use crate::config::{Config, Language};
+use crate::app_config::{Config, Language};
 
 pub type TranslationMap = HashMap<String, String>;
 
@@ -78,13 +78,15 @@ lazy_static! {
 pub struct Translations {
     current_language: Language,
     strings: HashMap<Language, TranslationMap>,
+    coloring: bool,
 }
 
 impl Translations {
     pub fn new() -> Self {
         let mut translations = Self {
-            current_language: Language::English,
+            current_language: Language::Hungarian,
             strings: HashMap::new(),
+            coloring: false,
         };
 
         // Load all languages using the Language.all() method
@@ -147,6 +149,11 @@ impl Translations {
         translations.current_language = language;
     }
 
+    pub fn set_coloring(coloring: bool) {
+        let mut translations = TRANSLATIONS.lock().unwrap();
+        translations.coloring = coloring;
+    }
+
     // Simplify access to translations
     pub fn t(key: &str) -> String {
         Self::get(key)
@@ -167,14 +174,30 @@ impl Translations {
 // Apply color formatting to text with XML-like color tags
 fn apply_color_formatting(text: &str) -> String {
     let mut result = text.to_string();
+    let config = Config::load();
 
-    // Process all color tags using the COLOR_TAGS map
-    for (tag, color) in COLOR_TAGS.iter() {
-        let open_tag = format!("<{}>", tag);
-        let close_tag = format!("</{}>", tag);
+    match config.coloring {
+        true => {
+            // Process all color tags using the COLOR_TAGS map
+            for (tag, color) in COLOR_TAGS.iter() {
+                let open_tag = format!("<{}>", tag);
+                let close_tag = format!("</{}>", tag);
 
-        result = result.replace(&open_tag, color.code());
-        result = result.replace(&close_tag, AnsiColor::Reset.code());
+                result.replace_range(0..0, AnsiColor::Reset.code());
+                result = result.replace(&open_tag, color.code());
+                result = result.replace(&close_tag, AnsiColor::Reset.code());
+            }
+        }
+        false => {
+            // Remove all color tags
+            for (tag, _) in COLOR_TAGS.iter() {
+                let open_tag = format!("<{}>", tag);
+                let close_tag = format!("</{}>", tag);
+
+                result = result.replace(&open_tag, "");
+                result = result.replace(&close_tag, "");
+            }
+        }
     }
 
     result
@@ -185,9 +208,11 @@ fn load_language_file(filename: &str) -> Result<TranslationMap, Box<dyn std::err
     if path.exists() {
         let content = fs::read_to_string(path)?;
         let mut parsed: HashMap<String, String> = toml::from_str(&content)?;
+        // let config = Config::load();
         // parsed
         //     .iter_mut()
         //     .for_each(|(_, value)| *value = format!("{}{}", AnsiColor::Reset.code(), value));
+
         Ok(parsed)
     } else {
         Err(format!(

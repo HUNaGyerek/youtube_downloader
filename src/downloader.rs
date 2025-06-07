@@ -1,9 +1,9 @@
 use std::time::Instant;
 use youtube_dl::{YoutubeDl, YoutubeDlOutput};
 
-use crate::installers::get_yt_dlp_path;
+use crate::installer::get_yt_dlp_path;
 use crate::models::Music;
-use crate::translations::Translations;
+use crate::translation::Translations;
 
 pub fn get_video_info(url: &str) -> Result<Music, Box<dyn std::error::Error>> {
     println!("{}", Translations::tf("fetching_video_info", url));
@@ -13,7 +13,7 @@ pub fn get_video_info(url: &str) -> Result<Music, Box<dyn std::error::Error>> {
         Some(path) => path,
         None => {
             println!("yt-dlp is not installed or not found. Attempting to install...");
-            crate::installers::install_yt_dlp()?;
+            crate::installer::install_yt_dlp()?;
 
             // Verify installation was successful
             match get_yt_dlp_path() {
@@ -56,7 +56,7 @@ pub fn fetch_playlist_videos(url: &str) -> Result<Vec<Music>, Box<dyn std::error
         Some(path) => path,
         None => {
             println!("yt-dlp is not installed or not found. Attempting to install...");
-            crate::installers::install_yt_dlp()?;
+            crate::installer::install_yt_dlp()?;
 
             // Verify installation was successful
             match get_yt_dlp_path() {
@@ -122,7 +122,7 @@ pub fn download_video(video: &Music, download_dir: &str) -> Result<(), Box<dyn s
         Some(path) => path,
         None => {
             println!("yt-dlp is not installed or not found. Attempting to install...");
-            crate::installers::install_yt_dlp()?;
+            crate::installer::install_yt_dlp()?;
 
             // Verify installation was successful
             match get_yt_dlp_path() {
