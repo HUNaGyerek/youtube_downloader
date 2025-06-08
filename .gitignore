@@ -2,3 +2,4 @@ target
 songs
 Music
 /download_history.json
+/config.toml
