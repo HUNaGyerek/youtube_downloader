@@ -1,37 +1,16 @@
-use std::io;
-
 use rfd::FileDialog;
 
 use crate::{
-    app_config::{Config, Language},
-    display_language_menu,
-    translation::Translations,
+    app_config::Config,
+    models::translation::Translations,
     utils::read_line,
+    views::{
+        languages::{LanguageMenuOption, LanguageView},
+        View,
+    },
 };
 
-pub enum SettingsMenuOption {
-    Language,
-    Directory,
-    Coloring,
-    Back,
-}
-
-pub struct SettingsViewOption {
-    _option: SettingsMenuOption,
-    pub display_value: String,
-}
-
-impl SettingsViewOption {
-    pub fn new(_option: SettingsMenuOption, display_value: &str) -> Self {
-        Self {
-            _option,
-            display_value: display_value.to_string(),
-        }
-    }
-}
-
 pub struct SettingsView(Vec<SettingsViewOption>);
-
 impl SettingsView {
     pub fn new() -> Self {
         Self(vec![
@@ -41,70 +20,83 @@ impl SettingsView {
             SettingsViewOption::new(SettingsMenuOption::Back, "settings_back"),
         ])
     }
+}
 
-    pub fn render_view(&self) -> String {
+impl View for SettingsView {
+    type Output = SettingsMenuOption;
+
+    fn render_view(&self) -> Self::Output {
         println!("\n{}", Translations::t("settings_title"));
 
         for option in &self.0 {
             println!("{}", Translations::t(&option.display_value));
         }
 
-        read_line(Translations::t("settings_enter_choice"))
+        let input: i8 = read_line(Translations::t("settings_enter_choice"))
+            .parse()
+            .unwrap();
+        if &(input as usize) > &self.0.len() && input <= 0 {
+            println!("{}", Translations::tf2("invalid_choice", "1", "4"));
+            self.render_view();
+        }
+
+        SettingsMenuOption::from(input)
     }
+}
 
-    pub fn create_menu(value: SettingsMenuOption) {
-        let mut config = Config::load();
+pub struct SettingsViewOption {
+    _option: SettingsMenuOption,
+    pub display_value: String,
+}
+impl SettingsViewOption {
+    pub fn new(_option: SettingsMenuOption, display_value: &str) -> Self {
+        Self {
+            _option,
+            display_value: display_value.to_string(),
+        }
+    }
+}
+
+pub enum SettingsMenuOption {
+    Language = 1,
+    Directory,
+    Coloring,
+    Back,
+}
+
+impl From<i8> for SettingsMenuOption {
+    fn from(value: i8) -> Self {
         match value {
+            1 => SettingsMenuOption::Language,
+            2 => SettingsMenuOption::Directory,
+            3 => SettingsMenuOption::Coloring,
+            4 => SettingsMenuOption::Back,
+            _ => panic!("Invalid value for SettingsMenuOption"),
+        }
+    }
+}
+
+impl SettingsMenuOption {
+    pub fn create_menu(&self) {
+        let mut config = Config::load();
+        match self {
             SettingsMenuOption::Language => {
-                // Display language selection menu
-                display_language_menu();
+                let language_view = LanguageView::new();
+                let language_choice = language_view.render_view();
 
-                let mut lang_choice = String::new();
-                io::stdin().read_line(&mut lang_choice).unwrap();
-
-                // Parse choice as a number
-                if let Ok(choice_num) = lang_choice.trim().parse::<usize>() {
-                    let languages = Language::all();
-
-                    if choice_num >= 1 && choice_num <= languages.len() {
-                        // Valid language choice
-                        let selected_lang = languages[choice_num - 1];
-
-                        config.set_language(selected_lang).unwrap();
-                        Translations::change_language(selected_lang);
-
-                        match selected_lang {
-                            Language::English => {
-                                println!("{}", Translations::t("language_set_english"))
-                            }
-                            Language::Hungarian => {
-                                println!("{}", Translations::t("language_set_hungarian"))
-                            }
-                        }
-                    } else if choice_num == languages.len() + 1 {
-                        // Back option
-                        println!("{}", Translations::t("return_to_menu"));
-                    } else {
-                        // Invalid number
+                match language_choice {
+                    LanguageMenuOption::Language(language) => {
+                        config.set_language(language).unwrap();
+                        Translations::change_language(language);
                         println!(
                             "{}",
-                            Translations::tf2(
-                                "invalid_choice",
-                                "1",
-                                &(languages.len() + 1).to_string()
-                            )
+                            Translations::t(&format!(
+                                "language_set_{}",
+                                language.to_string().to_lowercase()
+                            ))
                         );
                     }
-                } else {
-                    // Not a number
-                    println!(
-                        "{}",
-                        Translations::tf2(
-                            "invalid_choice",
-                            "1",
-                            &(Language::all().len() + 1).to_string()
-                        )
-                    );
+                    LanguageMenuOption::Back => {}
                 }
             }
             SettingsMenuOption::Directory => {

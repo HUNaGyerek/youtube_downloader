@@ -6,8 +6,3 @@ pub struct Music {
     pub title: Option<String>,
     pub downloaded_at: Option<String>,
 }
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct History {
-    pub downloads: Vec<Music>,
-}

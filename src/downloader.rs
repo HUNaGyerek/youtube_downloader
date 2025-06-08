@@ -2,38 +2,17 @@ use std::time::Instant;
 use youtube_dl::{YoutubeDl, YoutubeDlOutput};
 
 use crate::installer::get_yt_dlp_path;
-use crate::models::Music;
-use crate::translation::Translations;
+use crate::models::music::Music;
+use crate::models::translation::Translations;
 
 pub fn get_video_info(url: &str) -> Result<Music, Box<dyn std::error::Error>> {
     println!("{}", Translations::tf("fetching_video_info", url));
 
-    // Check if yt-dlp is installed, if not try to install it
-    let yt_dlp_path = match get_yt_dlp_path() {
-        Some(path) => path,
-        None => {
-            println!("yt-dlp is not installed or not found. Attempting to install...");
-            crate::installer::install_yt_dlp()?;
-
-            // Verify installation was successful
-            match get_yt_dlp_path() {
-                Some(path) => {
-                    println!("yt-dlp installed successfully.");
-                    path
-                }
-                None => {
-                    return Err(
-                        "yt-dlp was not found after installation. Please install it manually."
-                            .into(),
-                    )
-                }
-            }
-        }
-    };
-
-    // Create and run YoutubeDl with explicit path
     let mut youtube_dl = YoutubeDl::new(url);
+
+    let yt_dlp_path = get_yt_dlp_path().unwrap();
     youtube_dl.youtube_dl_path(yt_dlp_path);
+    // Create and run YoutubeDl with explicit path
     youtube_dl.socket_timeout("15");
 
     let output = youtube_dl.run()?;

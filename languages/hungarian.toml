@@ -3,8 +3,8 @@
 ##########
 
 # Menu
-current_language = "Jelenlegi nyelv: "
-download_directory = "Jelenlegi letöltési mappa: "
+current_language = "Jelenlegi nyelv:"
+download_directory = "Jelenlegi letöltési mappa:"
 
 menu_title = "<b>===== <red>DownTone Letöltő</red> =====</b>"
 menu_add_url = "1. URL hozzáadása a letöltési listához"
@@ -24,13 +24,12 @@ settings_coloring = "3. Színek bekapcsolása/kikapcsolása"
 settings_back = "4. Vissza a főmenübe"
 settings_enter_choice = "Válassz egy opciót (1-4): <b><blue>"
 
-
 # Language selection
 language_select = "Válassz nyelvet:"
 language_english = "English"
 language_hungarian = "Magyar"
 language_back = "Vissza a főmenübe"
-language_enter_choice = "Válassz egy opciót (1-3): <b><blue>"
+language_enter_choice = "Válassz egy opciót ({}-{}): <b><blue>"
 language_set_hungarian = "<green>A nyelv magyarra lett állítva.</green>"
 
 # Messages

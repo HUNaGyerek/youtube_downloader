@@ -5,7 +5,8 @@ use std::path::Path;
 use std::process;
 use std::sync::Mutex;
 
-use crate::app_config::{Config, Language};
+use crate::app_config::Config;
+use crate::models::language::Language;
 
 pub type TranslationMap = HashMap<String, String>;
 

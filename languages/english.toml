@@ -3,8 +3,8 @@
 ##########
 
 # Menu
-current_language = "Current language: "
-download_directory = "Download directory: "
+current_language = "Current language:"
+download_directory = "Download directory:"
 
 menu_title = "<b>===== <red>YouTube Downloader</red> =====</b>"
 menu_add_url = "1. Add URL to download queue"
@@ -29,7 +29,7 @@ language_select = "Select a language:"
 language_english = "English"
 language_hungarian = "Magyar"
 language_back = "Back to main menu"
-language_enter_choice = "Enter choice (1-3): <b><blue>"
+language_enter_choice = "Enter choice ({}-{}): <b><blue>"
 language_set_english = "<green>Language set to English.</green>"
 
 # Messages
