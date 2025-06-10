@@ -1,5 +1,3 @@
-use std::fs;
-use std::path::Path;
 use std::process::Command;
 
 #[cfg(target_os = "linux")]
@@ -239,7 +237,7 @@ pub fn install_yt_dlp() -> Result<(), Box<dyn std::error::Error>> {
         println!("Installing yt-dlp via winget...");
         let status = Command::new("winget")
             .args(&["install", "yt-dlp"])
-            .status()?;
+            .status();
         return Ok(());
     }
 

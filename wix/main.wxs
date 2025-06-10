@@ -1,0 +1,97 @@
+<?xml version='1.0' encoding='windows-1252'?>
+
+<?if $(sys.BUILDARCH) = x64 or $(sys.BUILDARCH) = arm64 ?>
+    <?define PlatformProgramFilesFolder = "ProgramFiles64Folder" ?>
+<?else ?>
+    <?define PlatformProgramFilesFolder = "ProgramFilesFolder" ?>
+<?endif ?>
+
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+
+    <Product
+        Id='*'
+        Name='youtube-downloader'
+        UpgradeCode='28607D32-A104-41A5-8041-2DBB46344A7A'
+        Manufacturer='Szvetnyik Olivér'
+        Language='1033'
+        Codepage='1252'
+        Version='$(var.Version)'>
+
+        <Package Id='*'
+            Keywords='Installer'
+            Manufacturer='Szvetnyik Olivér'
+            InstallerVersion='450'
+            Languages='1033'
+            Compressed='yes'
+            InstallScope='perMachine'
+            SummaryCodepage='1252'
+            />
+
+        <MajorUpgrade
+            Schedule='afterInstallInitialize'
+            DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.'/>
+
+        <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/>
+        <Property Id='DiskPrompt' Value='youtube-downloader Installation'/>
+        <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+        <Directory Id='TARGETDIR' Name='SourceDir'>
+            <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
+                <Directory Id='INSTALLFOLDER' Name='youtube-downloader'>
+                    <Directory Id='Bin' Name='bin'>
+                        <Directory Id="LANGUAGESFOLDER" Name="languages">
+                            <Component Id="LanguagesFolderComponent" Guid="fbed7c37-c32f-429d-add9-9e79513cae39" KeyPath="yes">
+                                <File Id="LangFile1" Name="english.toml" Source="..\..\languages\english.toml" />
+                                <File Id="LangFile2" Name="hungarian.toml" Source="..\..\languages\hungarian.toml" />
+                            </Component>
+                        </Directory>
+                        <Component Id='Path' Guid='3A633706-95D1-4AE0-82F3-4175A57DB354' KeyPath='yes'>
+                            <Environment
+                                Id='PATH'
+                                Name='PATH'
+                                Value='[Bin]'
+                                Permanent='no'
+                                Part='last'
+                                Action='set'
+                                System='yes'/>
+                        </Component>
+                        <Component Id='binary0' Guid='6bd52070-c35b-4d5a-b934-38df8cfd5045' KeyPath="yes">
+                            <File
+                                Id='exe0'
+                                Name='youtube-downloader.exe'
+                                DiskId='1'
+                                Source='$(var.CargoTargetBinDir)\youtube-downloader.exe'/>
+                        </Component>
+                    </Directory>
+                </Directory>
+            </Directory>
+        </Directory>
+
+        <Feature
+            Id='Binaries'
+            Title='Application'
+            Description='Installs all binaries and the license.'
+            Level='1'
+            ConfigurableDirectory='INSTALLFOLDER'>
+
+            <ComponentRef Id='binary0'/>
+            <ComponentRef Id='LanguagesFolderComponent'/>
+
+            <Feature
+                Id='Environment'
+                Title='PATH Environment Variable'
+                Description='Add the install location of the [ProductName] executable to the PATH system environment variable. This allows the [ProductName] executable to be called from any location.'
+                Level='1'
+                Absent='allow'>
+                <ComponentRef Id='Path'/>
+            </Feature>
+        </Feature>
+
+        <SetProperty Id='ARPINSTALLLOCATION' Value='[APPLICATIONFOLDER]' After='CostFinalize'/>
+
+        <UI>
+            <UIRef Id='WixUI_InstallDir'/>
+        </UI>
+    </Product>
+
+</Wix>
