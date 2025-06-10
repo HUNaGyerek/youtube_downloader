@@ -44,19 +44,6 @@ impl View for SettingsView {
     }
 }
 
-pub struct SettingsViewOption {
-    _option: SettingsMenuOption,
-    pub display_value: String,
-}
-impl SettingsViewOption {
-    pub fn new(_option: SettingsMenuOption, display_value: &str) -> Self {
-        Self {
-            _option,
-            display_value: display_value.to_string(),
-        }
-    }
-}
-
 pub enum SettingsMenuOption {
     Language = 1,
     Directory,
@@ -117,6 +104,19 @@ impl SettingsMenuOption {
                 println!("{}", Translations::t("coloring_toggled"));
             }
             SettingsMenuOption::Back => println!("{}", Translations::t("return_to_menu")),
+        }
+    }
+}
+
+pub struct SettingsViewOption {
+    _option: SettingsMenuOption,
+    pub display_value: String,
+}
+impl SettingsViewOption {
+    pub fn new(_option: SettingsMenuOption, display_value: &str) -> Self {
+        Self {
+            _option,
+            display_value: display_value.to_string(),
         }
     }
 }

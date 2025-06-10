@@ -50,19 +50,6 @@ impl View for MainView {
     }
 }
 
-pub struct MainViewOption {
-    _option: MainMenuOption,
-    pub display_value: String,
-}
-impl MainViewOption {
-    pub fn new(_option: MainMenuOption, display_value: &str) -> Self {
-        Self {
-            _option,
-            display_value: display_value.to_string(),
-        }
-    }
-}
-
 pub enum MainMenuOption {
     AddUrl = 1,
     ListQueue,
@@ -227,6 +214,19 @@ impl MainMenuOption {
                 println!("{}", Translations::t("exiting"));
                 runtime.stop();
             }
+        }
+    }
+}
+
+pub struct MainViewOption {
+    _option: MainMenuOption,
+    pub display_value: String,
+}
+impl MainViewOption {
+    pub fn new(_option: MainMenuOption, display_value: &str) -> Self {
+        Self {
+            _option,
+            display_value: display_value.to_string(),
         }
     }
 }

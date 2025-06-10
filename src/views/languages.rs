@@ -60,6 +60,11 @@ impl View for LanguageView {
     }
 }
 
+pub enum LanguageMenuOption {
+    Language(Language),
+    Back,
+}
+
 #[derive(Debug)]
 pub struct LanguageViewOption {
     _option: Language,
@@ -72,9 +77,4 @@ impl LanguageViewOption {
             display_value: display_value.to_string(),
         }
     }
-}
-
-pub enum LanguageMenuOption {
-    Language(Language),
-    Back,
 }
