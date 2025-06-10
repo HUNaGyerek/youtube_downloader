@@ -14,7 +14,7 @@ pub type TranslationMap = HashMap<String, String>;
 const LANGUAGES_DIR: &str = "languages";
 
 // ANSI color codes enum
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AnsiColor {
     Red,
     Green,
@@ -174,33 +174,72 @@ impl Translations {
 
 // Apply color formatting to text with XML-like color tags
 fn apply_color_formatting(text: &str) -> String {
-    let mut result = text.to_string();
     let config = Config::load();
 
-    match config.coloring {
-        true => {
-            // Process all color tags using the COLOR_TAGS map
-            for (tag, color) in COLOR_TAGS.iter() {
-                let open_tag = format!("<{}>", tag);
-                let close_tag = format!("</{}>", tag);
-
-                result.replace_range(0..0, AnsiColor::Reset.code());
-                result = result.replace(&open_tag, color.code());
-                result = result.replace(&close_tag, AnsiColor::Reset.code());
-            }
+    if !config.coloring {
+        // Remove all tags
+        let mut result = text.to_string();
+        for (tag, _) in COLOR_TAGS.iter() {
+            let open_tag = format!("<{}>", tag);
+            let close_tag = format!("</{}>", tag);
+            result = result.replace(&open_tag, "").replace(&close_tag, "");
         }
-        false => {
-            // Remove all color tags
-            for (tag, _) in COLOR_TAGS.iter() {
-                let open_tag = format!("<{}>", tag);
-                let close_tag = format!("</{}>", tag);
-
-                result = result.replace(&open_tag, "");
-                result = result.replace(&close_tag, "");
-            }
-        }
+        return result;
     }
 
+    let mut result = String::new();
+    let mut tag_stack: Vec<AnsiColor> = Vec::new();
+    let chars: Vec<char> = text.chars().collect();
+    let mut i = 0;
+    result.push_str(AnsiColor::Reset.code());
+
+    while i < chars.len() {
+        if chars[i] == '<' {
+            // Find the closing '>' character
+            let mut j = i + 1;
+            while j < chars.len() && chars[j] != '>' {
+                j += 1;
+            }
+
+            if j < chars.len() {
+                let tag: String = chars[i + 1..j].iter().collect();
+                let is_closing = tag.starts_with('/');
+                let tag_name = if is_closing { &tag[1..] } else { &tag };
+
+                if let Some(color) = COLOR_TAGS.get(tag_name) {
+                    if is_closing {
+                        // Remove the last matching tag from stack
+                        if let Some(pos) = tag_stack.iter().rposition(|&c| c == *color) {
+                            tag_stack.remove(pos);
+                        }
+                        result.push_str(AnsiColor::Reset.code());
+                        // Re-apply all remaining styles
+                        for color in &tag_stack {
+                            result.push_str(color.code());
+                        }
+                    } else {
+                        // Apply the color immediately
+                        result.push_str(color.code());
+                        tag_stack.push(*color);
+                    }
+                } else {
+                    // Not a valid tag, include it literally
+                    result.push('<');
+                    result.push_str(&tag);
+                    result.push('>');
+                }
+
+                i = j + 1;
+                continue;
+            }
+        }
+
+        result.push(chars[i]);
+        i += 1;
+    }
+
+    // Reset formatting at end
+    // result.push_str(AnsiColor::Reset.code());
     result
 }
 
