@@ -1,8 +1,11 @@
+use std::path::Path;
 use std::process::Command;
 
 #[cfg(target_os = "linux")]
 pub fn detect_linux_distro() -> Option<String> {
     // Try reading /etc/os-release first (most modern distros)
+
+    use std::fs;
     if let Ok(content) = fs::read_to_string("/etc/os-release") {
         for line in content.lines() {
             if line.starts_with("ID=") {
@@ -235,9 +238,7 @@ pub fn install_yt_dlp() -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(target_os = "windows")]
     {
         println!("Installing yt-dlp via winget...");
-        let status = Command::new("winget")
-            .args(&["install", "yt-dlp"])
-            .status();
+        let status = Command::new("winget").args(&["install", "yt-dlp"]).status();
         return Ok(());
     }
 
