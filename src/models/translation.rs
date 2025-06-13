@@ -10,9 +10,6 @@ use crate::models::language::Language;
 
 pub type TranslationMap = HashMap<String, String>;
 
-// Define the languages folder
-const LANGUAGES_DIR: &str = "languages";
-
 // ANSI color codes enum
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AnsiColor {
@@ -155,20 +152,8 @@ impl Translations {
         translations.coloring = coloring;
     }
 
-    // Simplify access to translations
-    pub fn t(key: &str) -> String {
-        Self::get(key)
-    }
-
-    // Format a translation with a single argument
-    pub fn tf(key: &str, arg: &str) -> String {
-        Self::t(key).replace("{}", arg)
-    }
-
-    // Format a translation with two arguments
-    pub fn tf2(key: &str, arg1: &str, arg2: &str) -> String {
-        let s = Self::t(key).replacen("{}", arg1, 1);
-        s.replacen("{}", arg2, 1)
+    pub fn t(key: &str, args: Option<&[&str]>) -> String {
+        Self::get(&replace_all(key, args))
     }
 }
 
@@ -244,7 +229,7 @@ fn apply_color_formatting(text: &str) -> String {
 }
 
 fn load_language_file(filename: &str) -> Result<TranslationMap, Box<dyn std::error::Error>> {
-    let path = Path::new(LANGUAGES_DIR).join(filename);
+    let path = Path::new("languages").join(filename);
     if path.exists() {
         let content = fs::read_to_string(path)?;
         let parsed: HashMap<String, String> = toml::from_str(&content)?;
@@ -257,4 +242,24 @@ fn load_language_file(filename: &str) -> Result<TranslationMap, Box<dyn std::err
         )
         .into())
     }
+}
+
+fn replace_all(template: &str, replacements: Option<&[&str]>) -> String {
+    let mut result = String::new();
+    let mut parts = template.split("{}");
+    let mut iter = replacements.into_iter().flatten();
+
+    if let Some(first) = parts.next() {
+        result.push_str(first);
+    }
+
+    for part in parts {
+        match iter.next() {
+            Some(value) => result.push_str(value),
+            None => result.push_str("{}"),
+        }
+        result.push_str(part);
+    }
+
+    result
 }

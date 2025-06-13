@@ -6,7 +6,7 @@ use crate::models::music::Music;
 use crate::models::translation::Translations;
 
 pub fn get_video_info(url: &str) -> Result<Music, Box<dyn std::error::Error>> {
-    println!("{}", Translations::tf("fetching_video_info", url));
+    println!("{}", Translations::t("fetching_video_info", Some(&[url])));
 
     let mut youtube_dl = YoutubeDl::new(url);
 
@@ -92,7 +92,7 @@ pub fn fetch_playlist_videos(url: &str) -> Result<Vec<Music>, Box<dyn std::error
 
 pub fn download_video(video: &Music, download_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
     let title = video.title.clone().unwrap_or_else(|| "Unknown".to_string());
-    println!("{}", Translations::tf("video_downloading", &title));
+    println!("{}", Translations::t("video_downloading", Some(&[&title])));
 
     let start_time = Instant::now();
 
@@ -137,14 +137,17 @@ pub fn download_video(video: &Music, download_dir: &str) -> Result<(), Box<dyn s
             let duration = start_time.elapsed();
             println!(
                 "{}",
-                Translations::tf2("video_downloaded", &title, &duration.as_secs().to_string())
+                Translations::t(
+                    "video_downloaded",
+                    Some(&[&title, &duration.as_secs().to_string()])
+                )
             );
             Ok(())
         }
         Err(e) => {
             println!(
                 "{}",
-                Translations::tf2("video_download_failed", &title, &e.to_string())
+                Translations::t("video_download_failed", Some(&[&title, &e.to_string()]))
             );
             Err(e.into())
         }

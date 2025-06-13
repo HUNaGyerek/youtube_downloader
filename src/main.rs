@@ -46,15 +46,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!(
         "{} {}",
-        Translations::t("current_language"),
-        Translations::t(&format!(
-            "language_{}",
-            config.language.to_string().to_lowercase()
-        ))
+        Translations::t("current_language", None),
+        Translations::t(
+            &format!("language_{}", config.language.to_string().to_lowercase()),
+            None
+        )
     );
     println!(
         "{} {}",
-        Translations::t("download_directory"),
+        Translations::t("download_directory", None),
         config.get_download_dir()
     );
 
@@ -67,6 +67,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         MainMenuOption::create_menu(&main_choice, &mut runtime);
     }
 
-    println!("{}", Translations::t("app_stopped"));
+    println!("{}", Translations::t("app_stopped", None));
     Ok(())
 }

@@ -33,16 +33,16 @@ impl View for MainView {
     type Output = MainMenuOption;
 
     fn render_view(&self) -> Self::Output {
-        println!("\n{}", Translations::t("menu_title"));
+        println!("\n{}", Translations::t("menu_title", None));
         for main_option in &self.0 {
-            println!("{}", Translations::t(&main_option.display_value))
+            println!("{}", Translations::t(&main_option.display_value, None))
         }
 
-        let input: i8 = read_line(Translations::t("menu_enter_choice"))
+        let input: i8 = read_line(Translations::t("menu_enter_choice", None))
             .parse()
             .unwrap();
         if &(input as usize) > &self.0.len() && input <= 0 {
-            println!("{}", Translations::tf2("invalid_choice", "1", "7"));
+            println!("{}", Translations::t("invalid_choice", Some(&["1", "7"])));
             self.render_view();
         }
 
@@ -80,26 +80,29 @@ impl MainMenuOption {
         let config = Config::load();
         match &self {
             MainMenuOption::AddUrl => {
-                let url = read_line(Translations::t("enter_url"));
+                let url = read_line(Translations::t("enter_url", None));
 
                 if !url.is_empty() {
-                    println!("{}", Translations::t("fetching_info"));
+                    println!("{}", Translations::t("fetching_info", None));
                     match fetch_playlist_videos(&url) {
                         Ok(videos) => {
                             let mut buffer = runtime.get_url_buffer();
                             for video in videos {
                                 if buffer.contains(&video) {
-                                    println!("{}", Translations::t("already_added"));
+                                    println!("{}", Translations::t("already_added", None));
                                     continue;
                                 }
                                 let title =
                                     video.title.clone().unwrap_or_else(|| "Unknown".to_string());
-                                println!("{}", Translations::tf("added_to_queue", &title));
+                                println!("{}", Translations::t("added_to_queue", Some(&[&title])));
                                 buffer.push_back(video);
                             }
                         }
                         Err(e) => {
-                            println!("{}", Translations::tf("error_fetching", &e.to_string()))
+                            println!(
+                                "{}",
+                                Translations::t("error_fetching", Some(&[&e.to_string()]))
+                            )
                         }
                     }
                 }
@@ -108,9 +111,9 @@ impl MainMenuOption {
                 let buffer = runtime.get_url_buffer();
 
                 if buffer.is_empty() {
-                    println!("{}", Translations::t("download_queue_empty"));
+                    println!("{}", Translations::t("download_queue_empty", None));
                 } else {
-                    println!("\n{}", Translations::t("download_queue_title"));
+                    println!("\n{}", Translations::t("download_queue_title", None));
                     for (i, video) in buffer.iter().enumerate() {
                         let title = video.title.clone().unwrap_or_else(|| "Unknown".to_string());
                         println!("{}. {}", i + 1, title);
@@ -120,11 +123,11 @@ impl MainMenuOption {
             MainMenuOption::Download => {
                 let urls: Vec<Music> = runtime.drain_buffer();
                 if urls.is_empty() {
-                    println!("{}", Translations::t("no_urls_to_download"));
+                    println!("{}", Translations::t("no_urls_to_download", None));
                 } else {
                     println!(
                         "{}",
-                        Translations::tf("starting_download", &urls.len().to_string())
+                        Translations::t("starting_download", Some(&[&urls.len().to_string()]))
                     );
                     let dir = config.get_download_dir().to_string();
 
@@ -146,18 +149,17 @@ impl MainMenuOption {
                     let success_count = results.iter().filter(|r| r.is_ok()).count();
                     let fail_count = results.len() - success_count;
 
-                    println!("\n{}", Translations::t("download_summary"));
+                    println!("\n{}", Translations::t("download_summary", None));
                     println!(
                         "{}",
-                        Translations::tf2(
+                        Translations::t(
                             "download_success",
-                            &success_count.to_string(),
-                            &urls.len().to_string()
+                            Some(&[&success_count.to_string(), &urls.len().to_string()])
                         )
                     );
                     println!(
                         "{}",
-                        Translations::tf("download_fail", &fail_count.to_string())
+                        Translations::t("download_fail", Some(&[&fail_count.to_string()]))
                     );
 
                     // Add successful downloads to history
@@ -173,9 +175,9 @@ impl MainMenuOption {
             MainMenuOption::ViewHistory => {
                 let history = History::load();
                 if history.downloads.is_empty() {
-                    println!("{}", Translations::t("no_history"));
+                    println!("{}", Translations::t("no_history", None));
                 } else {
-                    println!("\n{}", Translations::t("history_title"));
+                    println!("\n{}", Translations::t("history_title", None));
                     for (i, video) in history.downloads.iter().enumerate().rev().take(10) {
                         let title = video.title.clone().unwrap_or_else(|| "Unknown".to_string());
                         let date = video
@@ -191,9 +193,9 @@ impl MainMenuOption {
                     if history.downloads.len() > 10 {
                         println!(
                             "{}",
-                            Translations::tf(
+                            Translations::t(
                                 "history_more",
-                                &(history.downloads.len() - 10).to_string()
+                                Some(&[&(history.downloads.len() - 10).to_string()])
                             )
                         );
                     }
@@ -202,7 +204,10 @@ impl MainMenuOption {
             MainMenuOption::ClearQueue => {
                 let count = runtime.get_url_buffer().len();
                 runtime.clear_url_buffer();
-                println!("{}", Translations::tf("queue_cleared", &count.to_string()));
+                println!(
+                    "{}",
+                    Translations::t("queue_cleared", Some(&[&count.to_string()]))
+                );
             }
             MainMenuOption::Settings => {
                 let settings_view = SettingsView::new();
@@ -211,7 +216,7 @@ impl MainMenuOption {
                 SettingsMenuOption::create_menu(&setting_choice);
             }
             MainMenuOption::Exit => {
-                println!("{}", Translations::t("exiting"));
+                println!("{}", Translations::t("exiting", None));
                 runtime.stop();
             }
         }

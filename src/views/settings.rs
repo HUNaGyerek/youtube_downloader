@@ -26,17 +26,17 @@ impl View for SettingsView {
     type Output = SettingsMenuOption;
 
     fn render_view(&self) -> Self::Output {
-        println!("\n{}", Translations::t("settings_title"));
+        println!("\n{}", Translations::t("settings_title", None));
 
         for option in &self.0 {
-            println!("{}", Translations::t(&option.display_value));
+            println!("{}", Translations::t(&option.display_value, None));
         }
 
-        let input: i8 = read_line(Translations::t("settings_enter_choice"))
+        let input: i8 = read_line(Translations::t("settings_enter_choice", None))
             .parse()
             .unwrap();
         if &(input as usize) > &self.0.len() && input <= 0 {
-            println!("{}", Translations::tf2("invalid_choice", "1", "4"));
+            println!("{}", Translations::t("invalid_choice", Some(&["1", "4"])));
             self.render_view();
         }
 
@@ -77,10 +77,10 @@ impl SettingsMenuOption {
                         Translations::change_language(language);
                         println!(
                             "{}",
-                            Translations::t(&format!(
-                                "language_set_{}",
-                                language.to_string().to_lowercase()
-                            ))
+                            Translations::t(
+                                &format!("language_set_{}", language.to_string().to_lowercase()),
+                                None
+                            )
                         );
                     }
                     LanguageMenuOption::Back => {}
@@ -90,9 +90,9 @@ impl SettingsMenuOption {
                 if let Some(new_dir) = FileDialog::new().pick_folder() {
                     let dir_str = new_dir.display().to_string();
                     config.set_download_dir(dir_str.clone()).unwrap();
-                    println!("{}", Translations::tf("dir_set", &dir_str));
+                    println!("{}", Translations::t("dir_set", Some(&[&dir_str])));
                 } else {
-                    println!("{}", Translations::t("no_dir_selected"));
+                    println!("{}", Translations::t("no_dir_selected", None));
                 }
             }
             SettingsMenuOption::Coloring => {
@@ -101,9 +101,9 @@ impl SettingsMenuOption {
                 config.set_coloring(coloring).unwrap();
                 Translations::set_coloring(coloring);
 
-                println!("{}", Translations::t("coloring_toggled"));
+                println!("{}", Translations::t("coloring_toggled", None));
             }
-            SettingsMenuOption::Back => println!("{}", Translations::t("return_to_menu")),
+            SettingsMenuOption::Back => println!("{}", Translations::t("return_to_menu", None)),
         }
     }
 }
